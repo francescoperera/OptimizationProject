@@ -1,3 +1,6 @@
+"Most up-to-date script"
+
+
 from gurobipy import *
 
 airports = ['A','B','C']
@@ -40,8 +43,20 @@ demand[5][2] =  30
 demand[5][3] =  20
 demand[5][4] =  40
 
-outboundFrom = [[1,0,0],[1,0,0],[0,1,0],[0,1,0],[0,0,1],[0,0,1]]  # pair AB, outbound from A, inbound to B
-inboundTo = [[0,1,0],[0,0,1],[1,0,0],[0,0,1],[1,0,0],[0,1,0]]
+			  # "A,B,C"
+start = [[1,0,0],
+		[1,0,0],
+		[0,1,0],
+		[0,1,0],
+		[0,0,1],
+		[0,0,1]]  # pair AB, outbound from A, inbound to B
+
+end = [[0,1,0],
+		[0,0,1],
+		[1,0,0],
+		[0,0,1],
+		[1,0,0],
+		[0,1,0]]
 
 #create model 
 myModel = Model("cargoOperations")
@@ -85,8 +100,8 @@ myModel.update()
 objExpr = LinExpr()
 for i in range(len(dailyAirportPairs)):
 	for j in range(days):
-		yijt = emptyCargoPlanes[i][j]
-		objExpr += emptyCost[i] * yijt
+		xijt = emptyCargoPlanes[i][j]
+		objExpr += emptyCost[i] * xijt
 
 for i in range(len(airports)):
 	for j in range(days):
@@ -104,26 +119,97 @@ for i in range(len(dailyAirportPairs)):
 
 myModel.update()
 
+#outboundPlanes = LinExpr()
 
+#inboundPlanes = LinExpr()
+"""
 for i in range(len(dailyAirportPairs)):
-	outboundPlanes = LinExpr()
+	#outboundPlanes = LinExpr()
 
-	inboundPlanes = LinExpr()
+	#inboundPlanes = LinExpr()
 	for j in range(1,days):
 		for k in range(len(airports)):
-			outboundEmptyPlane = emptyCargoPlanes[i][j] * inboundTo[i][k]
+			print "airport pair, day,airport :" + dailyAirportPairs[i] + "," + str(j) + ","+airports[k]
+			outboundEmptyPlane = emptyCargoPlanes[i][j] * end[i][k]
+			print "outboundEmptyPlane is " + str(outboundEmptyPlane)
 			outboundPlanes += outboundEmptyPlane
-			outboundCargoPlane = cargoPlanes[i][j] * inboundTo[i][k]
+			outboundCargoPlane = cargoPlanes[i][j] * end[i][k]
+			print "outboundCargoPlane is " + str(outboundCargoPlane)
 			outboundPlanes += outboundCargoPlane
-			outboundPlanes += groundPlanes[k][j]
+			outboundPlanes += groundPlanes[k][j] * start[i][k]
+			print "z is " + str(groundPlanes[k][j])
 
-			inboundEmptyPlane = emptyCargoPlanes[i][j-1] * outboundFrom[i][k]
+
+			if  i == 0:
+				l = 2
+			elif i ==1:
+				l = 4
+			elif i == 2:
+				l=0
+			elif i ==3:
+				l=5
+			elif i == 4:
+				l=2
+			elif i == 5:
+				l = 3
+
+			inboundEmptyPlane = emptyCargoPlanes[l][j-1] * start[l][k]
 			inboundPlanes += inboundEmptyPlane
-			inboundCargoPlanes = cargoPlanes[i][j-1] * outboundFrom[i][k]
+			inboundCargoPlanes = cargoPlanes[l][j-1] * start[l][k]
 			inboundPlanes += inboundCargoPlanes
-			inboundPlanes += groundPlanes[k][j-1]
+			inboundPlanes += groundPlanes[k][j-1]* start[i][k]
+"""
+for i in range(len(airports)):
+	#outboundPlanes = LinExpr()
 
-		myModel.addConstr(lhs = outboundPlanes, sense = GRB.EQUAL, rhs = inboundPlanes, name = "planes flow balance "+dailyAirportPairs[i]+str(j))
+	#inboundPlanes = LinExpr()
+	for j in range(1,days):
+		outboundPlanes = LinExpr()
+
+		inboundPlanes = LinExpr()
+		outboundPlanes += groundPlanes[i][j]
+		inboundPlanes += groundPlanes[i][j-1]
+
+		for k in range(len(dailyAirportPairs)):
+			#print 
+			#print "airport pair, day,airport :" + dailyAirportPairs[k] + "," + str(j) + ","+airports[i]
+			outboundEmptyPlane = emptyCargoPlanes[k][j] * start[k][i]
+			#print "outboundEmptyPlane is " + str(outboundEmptyPlane)
+			outboundPlanes += outboundEmptyPlane
+			outboundCargoPlane = cargoPlanes[k][j] * start[k][i]
+			#print "outboundCargoPlane is " + str(outboundCargoPlane)
+			outboundPlanes += outboundCargoPlane
+			#outboundPlanes += groundPlanes[i][j] * start[k][i]
+			#print "z is " + str(groundPlanes[i][j])
+
+			if  k == 0:
+				l = 2
+			elif k ==1:
+				l = 4
+			elif k == 2:
+				l=0
+			elif k ==3:
+				l=5
+			elif k == 4:
+				l=1 #2
+			elif k == 5:
+				l = 3
+
+			if  start[k][i] == 0:
+				inboundEmptyPlane = 0
+				inboundCargoPlanes = 0
+			else:
+				inboundEmptyPlane = emptyCargoPlanes[l][j-1] * end[l][i]
+				inboundCargoPlanes = cargoPlanes[l][j-1] * end[l][i]
+			#print "inboundEmptyPlane is " + str(inboundEmptyPlane)
+			inboundPlanes += inboundEmptyPlane
+			#print "inboundCargoPlane is " + str(inboundCargoPlanes)
+			#print
+			inboundPlanes += inboundCargoPlanes
+			#inboundPlanes += groundPlanes[i][j-1]* start[k][i]
+
+
+		myModel.addConstr(lhs = outboundPlanes, sense = GRB.EQUAL, rhs = inboundPlanes, name = "planes flow balance "+airports[i]+str(j))
 
 myModel.update()
 
@@ -144,24 +230,46 @@ for i in range(len(dailyAirportPairs)):
 
 myModel.update()
 
-for i in range(len(dailyAirportPairs)):
+for i in range(len(airports)):
 	outboundPlanes = LinExpr()
-
 	inboundPlanes = LinExpr()
-	for k in range(len(airports)):
-		outboundEmptyPlane = emptyCargoPlanes[i][0] * inboundTo[i][k]
+
+	outboundPlanes += groundPlanes[i][0]
+	inboundPlanes += groundPlanes[i][4]
+	for k in range(len(dailyAirportPairs)):
+		print 
+		print "airport pair, airport :" + dailyAirportPairs[k] + "," +airports[i]
+		outboundEmptyPlane = emptyCargoPlanes[k][0] * start[k][i]
+		print "outboundEmptyPlane is " + str(outboundEmptyPlane)
 		outboundPlanes += outboundEmptyPlane
-		outboundCargoPlane = cargoPlanes[i][0] * inboundTo[i][k]
+		outboundCargoPlane = cargoPlanes[k][0] * start[k][i]
+		print "outboundCargoPlane is " + str(outboundCargoPlane)
 		outboundPlanes += outboundCargoPlane
-		outboundPlanes += groundPlanes[k][0]
+		#outboundPlanes += groundPlanes[k][0]
 
-		inboundEmptyPlane = emptyCargoPlanes[i][4] * outboundFrom[i][k]
+		if  k == 0:
+			l = 2
+		elif k ==1:
+			l = 4
+		elif k == 2:
+			l=0
+		elif k ==3:
+			l=5
+		elif k == 4:
+			l=1 #2
+		elif k == 5:
+			l = 3
+
+		inboundEmptyPlane = emptyCargoPlanes[l][4] * start[k][i]
+		print "inboundEmptyPlane is " + str(inboundEmptyPlane)
 		inboundPlanes += inboundEmptyPlane
-		inboundCargoPlanes = cargoPlanes[i][4] * outboundFrom[i][k]
+		inboundCargoPlanes = cargoPlanes[l][4] * start[k][i]
+		print "inboundCargoPlane is " + str(inboundCargoPlanes)
+		print
 		inboundPlanes += inboundCargoPlanes
-		inboundPlanes += groundPlanes[k][4]
+		#inboundPlanes += groundPlanes[k][4]
 
-		myModel.addConstr(lhs = outboundPlanes, sense = GRB.EQUAL, rhs = inboundPlanes, name = "wrap around planes flow balance")
+	myModel.addConstr(lhs = outboundPlanes, sense = GRB.EQUAL, rhs = inboundPlanes, name = "wrap around planes flow balance " + airports[i])
 
 myModel.update()
 

@@ -1,0 +1,20 @@
+
+Gurobi 6.5.1 (mac64) logging started Sun May  8 21:25:15 2016
+
+Warning: constraint name "cargo flow balance AB1" has a space
+Optimize a model with 75 rows, 105 columns and 300 nonzeros
+Coefficient statistics:
+  Matrix range    [1e+00, 1e+00]
+  Objective range [3e+00, 1e+01]
+  Bounds range    [0e+00, 0e+00]
+  RHS range       [2e+00, 4e+01]
+Presolve removed 1 rows and 0 columns
+Presolve time: 0.01s
+Presolved: 74 rows, 105 columns, 290 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    0.0000000e+00   1.244000e+03   0.000000e+00      0s
+      30    1.5125000e+03   0.000000e+00   0.000000e+00      0s
+
+Solved in 30 iterations and 0.02 seconds
+Optimal objective  1.512500000e+03
